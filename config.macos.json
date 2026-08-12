@@ -1,0 +1,11 @@
+{
+  "storage_path": null,
+  "screen_size": {
+    "x": 1280,
+    "y": 768
+  },
+  "fullscreen": false,
+  "locale": "zh_cn",
+  "custom_config_path": null,
+  "ironpython_enabled": true
+}

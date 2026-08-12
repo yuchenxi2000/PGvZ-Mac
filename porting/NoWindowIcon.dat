@@ -1,0 +1,1 @@
+PGvZ macOS: intentionally invalid BMP resource; keeps MonoGame from falling back to MonoGame.bmp and makes SDL_LoadBMP return null, so SDL_SetWindowIcon is skipped.

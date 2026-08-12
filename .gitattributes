@@ -1,0 +1,10 @@
+* text=auto
+*.sh text eol=lf
+*.pl text eol=lf
+*.py text eol=lf
+*.cs text eol=lf
+*.patch text eol=lf -whitespace
+*.json text eol=lf
+*.plist text eol=lf
+*.md text eol=lf
+*.png binary

@@ -1,0 +1,43 @@
+# macOS and editor metadata
+.DS_Store
+*.user
+.idea/
+.vscode/
+__pycache__/
+*.py[cod]
+
+# Repository-local tools and NuGet caches
+/.tools/
+/.nuget/
+/packages/
+
+# Proprietary local game installations or copies
+/local/
+/game/
+/game-install/
+/install/
+/vendor/
+/PlantGirlsVsZombies/
+/Program Files/
+/Application Support/
+/user-data/
+
+# Generated/extracted/decompiled trees and build output
+/src/
+/artifacts/
+/dist/
+**/bin/
+**/obj/
+*.app/
+*.dSYM/
+
+# Prevent accidental publication of game/runtime binaries
+*.exe
+*.dll
+*.pdb
+*.mdb
+*.dylib
+*.so
+*.ico
+*.bmp
+/packaging/icon/AppIcon-original.png
