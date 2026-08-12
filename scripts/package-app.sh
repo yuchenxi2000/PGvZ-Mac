@@ -49,6 +49,7 @@ dotnet publish "$PROJECT_ROOT/src/Lawn/Lawn.csproj" \
 
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$PROJECT_ROOT/dist"
 cp -R "$PUBLISH_DIR/." "$MACOS_DIR/"
+"$SCRIPT_DIR/link-sdl-compat.sh" "$MACOS_DIR"
 cp "$PROJECT_ROOT/packaging/Info.plist" "$CONTENTS/Info.plist"
 cp "$PROJECT_ROOT/config.macos.json" "$RESOURCES_DIR/config.json"
 ditto "$GAME_DIR/Content" "$RESOURCES_DIR/Content"

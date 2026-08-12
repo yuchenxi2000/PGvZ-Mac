@@ -41,6 +41,10 @@ while [ "$attempt" -lt 45 ]; do
     exit 1
   fi
   if python3 "$SCRIPT_DIR/websocket_smoke.py" 2>/dev/null; then
+    python3 "$SCRIPT_DIR/websocket_smoke.py" "import System" "None"
+    python3 "$SCRIPT_DIR/websocket_smoke.py" \
+      "System.Type.GetType('MonoGame.IMEHelper.Sdl, MonoGame.IMEHelper').GetField('NativeLibrary').GetValue(None) != System.IntPtr.Zero" \
+      "True"
     if [ -d "$DATA_DIR/mods/pgvztool" ]; then
       python3 "$SCRIPT_DIR/websocket_smoke.py" "import pgvztool" "None"
     fi

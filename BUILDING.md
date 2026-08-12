@@ -199,6 +199,7 @@ rm -rf -- "$PWD/src/Lawn" "$PWD/artifacts" "$PWD/dist"
 - 将 ILSpy 项目调整为 `net6.0`、`AnyCPU` 和命令行可执行输出；
 - 用 `MonoGame.Framework.DesktopGL` 替换 Windows MonoGame 程序集；
 - 使用跨平台 IMEHelper、Mono.Unix 与 RuntimeDetour 25.3.6；
+- 为 IMEHelper 0.10.0 所硬编码的 `libSDL2-2.0.0.dylib` 创建兼容符号链接，指向 MonoGame 提供的同一份 `libSDL2.dylib`；
 - 修正 ILSpy 8.2 对部分 `char switch` 和 dynamic event IL 的反编译结果；
 - 在非 Windows 平台避开 `user32!SetTimer` 和 WindowsIdentity；
 - macOS 构建把 `porting/NoWindowIcon.dat` 作为无效的 `Icon.bmp` 资源嵌入，使 MonoGame 跳过 `SDL_SetWindowIcon`，避免运行时覆盖 App 的 Dock 图标；
@@ -394,3 +395,7 @@ Finder/Dock 可能保留缓存。确认 App 内部构建号和新图标已更新
 ### 游戏启动后找不到模组或标准库
 
 检查用户数据目录下的 `IronPython/Libs`、`Content` 符号链接，以及 App 内 `Contents/Resources/lib` 和 `Content` 是否存在。移动 App 后重新启动会自动修正链接目标。
+
+### 修改按键绑定时提示找不到 `libSDL2-2.0.0.dylib`
+
+MonoGame 3.8.1 提供的库名是 `libSDL2.dylib`，而 IMEHelper 0.10.0 使用旧名称。重新运行打包脚本；它会在 `Contents/MacOS/` 创建 `libSDL2-2.0.0.dylib` 符号链接，并由冒烟测试实际初始化 IMEHelper 验证。

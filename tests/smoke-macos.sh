@@ -5,21 +5,28 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 PROJECT_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 LOG_FILE=$(mktemp -t pgvz-mac-smoke.XXXXXX)
 RUN_DIR="$PROJECT_ROOT/artifacts/run"
-SMOKE_MOD="$RUN_DIR/cust/mods/runtime_detour_smoke.py"
+DATA_DIR="$HOME/Library/Application Support/ZBC/PlantGirlsVsZombies"
+SMOKE_MOD="$DATA_DIR/cust/mods/runtime_detour_smoke.py"
+MARKER="$DATA_DIR/runtime_detour_smoke.ok"
 
 finish() {
   if [ -n "${GAME_PID:-}" ] && kill -0 "$GAME_PID" 2>/dev/null; then
     kill "$GAME_PID" 2>/dev/null || true
     wait "$GAME_PID" 2>/dev/null || true
   fi
-  rm -f "$SMOKE_MOD" "$RUN_DIR/runtime_detour_smoke.ok"
+  rm -f "$SMOKE_MOD" "$MARKER"
   rm -f "$LOG_FILE"
 }
 trap finish EXIT INT TERM
 
 "$PROJECT_ROOT/scripts/prepare-runtime.sh" >/dev/null
+if [ -e "$SMOKE_MOD" ]; then
+  echo "Refusing to overwrite existing smoke module: $SMOKE_MOD" >&2
+  exit 1
+fi
+mkdir -p "$DATA_DIR/cust/mods"
 cp "$SCRIPT_DIR/mods/runtime_detour_smoke.py" "$SMOKE_MOD"
-rm -f "$RUN_DIR/runtime_detour_smoke.ok"
+rm -f "$MARKER"
 "$PROJECT_ROOT/scripts/run-macos.sh" >"$LOG_FILE" 2>&1 &
 GAME_PID=$!
 
@@ -31,15 +38,19 @@ while [ "$attempt" -lt 30 ]; do
     exit 1
   fi
   if python3 "$SCRIPT_DIR/websocket_smoke.py" 2>/dev/null; then
+    python3 "$SCRIPT_DIR/websocket_smoke.py" "import System" "None"
+    python3 "$SCRIPT_DIR/websocket_smoke.py" \
+      "System.Type.GetType('MonoGame.IMEHelper.Sdl, MonoGame.IMEHelper').GetField('NativeLibrary').GetValue(None) != System.IntPtr.Zero" \
+      "True"
     if [ -d "$RUN_DIR/mods/pgvztool" ]; then
       python3 "$SCRIPT_DIR/websocket_smoke.py" "import pgvztool" "None"
     fi
     hook_attempt=0
-    while [ "$hook_attempt" -lt 10 ] && [ ! -f "$RUN_DIR/runtime_detour_smoke.ok" ]; do
+    while [ "$hook_attempt" -lt 10 ] && [ ! -f "$MARKER" ]; do
       sleep 1
       hook_attempt=$((hook_attempt + 1))
     done
-    if [ ! -f "$RUN_DIR/runtime_detour_smoke.ok" ]; then
+    if [ ! -f "$MARKER" ]; then
       sed -n '1,200p' "$LOG_FILE" >&2
       echo "RuntimeDetour hook did not run." >&2
       exit 1
