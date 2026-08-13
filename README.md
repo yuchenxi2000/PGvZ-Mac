@@ -46,9 +46,10 @@ dist/PlantGirlsVsZombies.app
 
 ## 已测试版本
 
-- 游戏版本：1.2.2
-- `Lawn.exe` 大小：77,074,673 bytes
-- `Lawn.exe` SHA-256：`f23085f08ccaabb9019356a4316660806b487620b3d55c65e73e4af9b1514c41`
+支持的游戏版本见 [`supported-game-builds.tsv`](supported-game-builds.tsv) 。
+
+已测试平台：
+
 - 目标架构：Apple Silicon，`osx-arm64`
 - 已验证系统：macOS 26.5.2
 - .NET SDK 6.0.428 / Runtime 6.0.36
@@ -56,8 +57,6 @@ dist/PlantGirlsVsZombies.app
 - IronPython 3.4.0（来自本地游戏安装）
 - MonoMod.RuntimeDetour 25.3.6
 - JIT；禁用 AOT、裁剪和 ReadyToRun
-
-源码补丁与指定的 `Lawn.exe` 和 ILSpy 输出相关。其他游戏版本、Intel Mac 和较早的 macOS 版本尚未验证，不应绕过哈希检查强行应用补丁。
 
 ## 运行数据
 

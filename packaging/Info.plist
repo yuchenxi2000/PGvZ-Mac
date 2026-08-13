@@ -19,9 +19,9 @@
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>1.2.2</string>
+  <string>0.0.0</string>
   <key>CFBundleVersion</key>
-  <string>10204</string>
+  <string>0.0.0</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.games</string>
   <key>LSMinimumSystemVersion</key>
@@ -30,5 +30,9 @@
   <true/>
   <key>NSHumanReadableCopyright</key>
   <string>Unofficial native macOS compatibility build</string>
+  <key>PGVZGameVersion</key>
+  <string>unknown</string>
+  <key>PGVZLawnSHA256</key>
+  <string>unknown</string>
 </dict>
 </plist>

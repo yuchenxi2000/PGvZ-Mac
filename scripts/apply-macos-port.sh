@@ -20,7 +20,8 @@ elif git -C "$PROJECT_ROOT" apply --reverse --check --directory=src/Lawn "$PATCH
 else
   git -C "$PROJECT_ROOT" apply --check --directory=src/Lawn "$PATCH_FILE" || true
   echo "The macOS patch does not match this decompiled source tree." >&2
-  echo "Verify the Lawn.exe SHA-256 and use ilspycmd 8.2.0.7535." >&2
+  echo "Use ilspycmd 8.2.0.7535, then review and adapt the patch for this game version." >&2
+  echo "After successful build and smoke tests, record its hash in supported-game-builds.tsv." >&2
   exit 1
 fi
 

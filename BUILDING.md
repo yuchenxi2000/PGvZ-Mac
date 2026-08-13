@@ -26,14 +26,12 @@
 
 ## 2. 已验证的输入和目标
 
-本补丁是版本相关的。目前唯一经过验证的输入是：
+已验证输入集中记录在 `supported-game-builds.tsv`，当前包括：
 
-```text
-游戏显示版本: 1.2.2
-文件: Lawn.exe
-大小: 77,074,673 bytes
-SHA-256: f23085f08ccaabb9019356a4316660806b487620b3d55c65e73e4af9b1514c41
-```
+| 游戏版本 | `Lawn.exe` 大小 | SHA-256 |
+| --- | ---: | --- |
+| 1.2.2 | 77,074,673 bytes | `f23085f08ccaabb9019356a4316660806b487620b3d55c65e73e4af9b1514c41` |
+| 1.2.3-alpha | 77,074,673 bytes | `58675534920f186591a0e7715029e601075a0b8eb7ddcdab657b417ec7a30b51` |
 
 目标环境：
 
@@ -48,7 +46,7 @@ ILSpyCmd: 8.2.0.7535
 
 已在 macOS 26.5.2 上验证。Info.plist 的最低系统版本目前为 macOS 11.0，但尚未逐个验证所有较早版本。Intel `osx-x64` 也未验证。
 
-不要绕过输入校验把补丁强行应用到其他游戏版本。新版的程序集布局、ILSpy 输出或源码位置发生变化时，应重新审查并更新补丁。
+哈希的作用是标记测试状态，而不是把构建流程锁死在某一版本。未知哈希会产生警告但继续执行，以便适配新版本；结构缺失、补丁无法完整应用或编译失败仍会停止。新版的程序集布局、ILSpy 输出或源码位置发生变化时，应重新审查并更新补丁，并在全部测试通过后登记新哈希。
 
 ## 3. 准备 Windows 游戏安装目录
 
@@ -125,7 +123,7 @@ export PGVZ_GAME_DIR="/absolute/path/to/PlantGirlsVsZombies"
 脚本依次完成：
 
 1. 安装并验证 .NET SDK 6.0.428 与 ILSpyCmd 8.2.0.7535；
-2. 校验 `Lawn.exe` 的 SHA-256，并检查 `Content/`、`lib/`；
+2. 检查 `Lawn.exe`、`Content/`、`lib/`，并在已验证构建清单中识别 SHA-256；未知哈希只警告；
 3. 用 ILSpy 的 single-file bundle reader 提取程序集到 `artifacts/extracted/windows/`；
 4. 将 `Lawn.dll` 反编译为 `src/Lawn/`；
 5. 应用 `patches/macos-port.patch`，复制 `porting/DynamicHookGenCompat.cs`；
@@ -165,7 +163,9 @@ dist/PlantGirlsVsZombies.app
 ./scripts/verify-game.sh "$PGVZ_GAME_DIR"
 ```
 
-哈希不一致时会停止。此时先确认取得的是受支持版本，不能仅修改脚本里的哈希继续构建。
+如果哈希存在于 `supported-game-builds.tsv`，脚本会显示识别到的游戏版本。哈希未知时会输出文件大小、SHA-256 和醒目警告，但返回成功并允许反编译继续进行。`Lawn.exe`、`Content/` 或 `lib/` 缺失仍是致命错误。
+
+这项宽松策略只表示“允许尝试适配”，不表示未知版本已经兼容。继续观察 `git apply --check`、编译和冒烟测试结果，不要因为编译成功就直接把哈希登记为已验证。
 
 ### 6.3 提取并反编译
 
@@ -225,6 +225,8 @@ rm -rf -- "$PWD/src/Lawn" "$PWD/artifacts" "$PWD/dist"
 ```
 
 发布参数明确禁用了 AOT、裁剪和 ReadyToRun。IronPython、反射与 RuntimeDetour 都依赖完整元数据和 JIT，不应打开这些优化。
+
+打包脚本从反编译项目的 `Properties/AssemblyInfo.cs` 读取 `AssemblyFileVersion` 和 `AssemblyInformationalVersion`，自动写入 `Info.plist`。因此 App 版本会随输入游戏变化，而不是固定在仓库模板中的某个版本。`CFBundleVersion` 由四段文件版本编码为单调递增的纯数字（例如 `1.2.3.0` 变成 `1020300`），避免覆盖安装时退回旧构建号；`PGVZGameVersion` 和 `PGVZLawnSHA256` 也会写入成品，便于追溯其输入。
 
 App 结构概要：
 
@@ -363,6 +365,7 @@ BUILDING.md
 README.md
 config.macos.json
 global.json
+supported-game-builds.tsv
 packaging/
 patches/
 porting/
@@ -372,9 +375,9 @@ tests/
 
 ## 11. 常见故障
 
-### `Unsupported Lawn.exe build`
+### `WARNING: unrecognized Lawn.exe build`
 
-输入不是已验证的 1.2.2 单文件包。重新确认 Windows 安装版本和复制完整性。不要只更新预期哈希。
+输入不在 `supported-game-builds.tsv` 的已验证清单中。脚本会继续，这是适配新版本的正常入口。记录警告中的哈希，检查补丁、编译和所有冒烟测试；全部通过后再向清单添加一行。若并未预期游戏升级，应先检查安装来源和文件完整性。
 
 ### `Refusing to overwrite existing source directory`
 
@@ -382,7 +385,7 @@ tests/
 
 ### `The macOS patch does not match this decompiled source tree`
 
-通常是游戏版本或 ILSpy 版本不一致。执行 `scripts/bootstrap-tools.sh` 和 `scripts/verify-game.sh`，确认使用文档固定版本。
+通常是新游戏版本改变了源码结构，或 ILSpy 版本不一致。确认使用仓库固定的 ILSpy 后，根据 `git apply --check` 输出重新审查和调整移植补丁；不能仅登记新哈希来跳过这一步。
 
 ### NuGet 还原失败
 
