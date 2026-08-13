@@ -1,8 +1,8 @@
-# 从 Windows 安装目录构建原生 macOS App
+# 从 Windows 安装包或安装目录构建原生 macOS App
 
-本文档描述一条可复现的完整流程：输入 Windows 安装完成后 `Program Files` 中的游戏目录，提取单文件 .NET 程序、反编译托管程序集、应用 macOS 兼容补丁、还原依赖，并生成一个自包含的 Apple Silicon `.app`。
+本文档描述一条可复现的完整流程：直接解压 Windows 自解压安装包，或使用安装完成后 `Program Files` 中的游戏目录，然后提取单文件 .NET 程序、反编译托管程序集、应用 macOS 兼容补丁、还原依赖，并生成一个自包含的 Apple Silicon `.app`。
 
-文档假定执行者只拥有本仓库和一份合法取得的 Windows 游戏安装，不依赖仓库作者电脑上的任何绝对路径。人类开发者或自动化智能体均可按顺序执行。
+文档假定执行者只拥有本仓库和一份合法取得的 Windows 游戏安装包或安装目录，不依赖仓库作者电脑上的任何绝对路径。人类开发者或自动化智能体均可按顺序执行。
 
 ## 1. 分发与版权边界
 
@@ -48,7 +48,25 @@ ILSpyCmd: 8.2.0.7535
 
 哈希的作用是标记测试状态，而不是把构建流程锁死在某一版本。未知哈希会产生警告但继续执行，以便适配新版本；结构缺失、补丁无法完整应用或编译失败仍会停止。新版的程序集布局、ILSpy 输出或源码位置发生变化时，应重新审查并更新补丁，并在全部测试通过后登记新哈希。
 
-## 3. 准备 Windows 游戏安装目录
+## 3. 准备游戏文件目录
+
+### 3.1 在 macOS 上直接解压安装包
+
+当前 Windows 版安装程序是 NSIS 自解压包，游戏文件直接存放在压缩包根层级。它不需要在 Windows 中执行，也不需要 Wine 或 CrossOver；使用 7-Zip 的 `x` 命令即可保留目录结构并取得全部文件。
+
+以下命令把安装包解压到仓库中已被 `.gitignore` 排除的 `local/` 目录：
+
+```sh
+mkdir -p "$PWD/local/PlantGirlsVsZombies"
+7z x "/absolute/path/to/PlantGirlsVsZombies-installer.exe" \
+  "-o$PWD/local/PlantGirlsVsZombies"
+```
+
+部分 7-Zip 发行包把命令安装为 `7zz`；此时只需把上述 `7z` 换成 `7zz`。必须使用 `x` 而不是 `e`，否则 `Content/` 和 `lib/` 的目录结构会被打平。
+
+NSIS 的 `$PLUGINSDIR/`、调试用 PDB、`SDL2.dll`、`soft_oal.dll` 等 Windows 文件也可能一并解出，保留或删除都不影响构建。构建工具只读取需要的输入，不会执行安装器，也不会修改安装包。
+
+### 3.2 使用已经安装的目录
 
 在 Windows 上安装游戏后，取得整个目录，而不是只复制 `Lawn.exe`。默认位置通常是：
 
@@ -56,7 +74,7 @@ ILSpyCmd: 8.2.0.7535
 C:\Program Files\ZBC\PlantGirlsVsZombies\
 ```
 
-传到 Mac 后至少应存在：
+无论直接解压还是使用已安装目录，最终输入至少应包含：
 
 ```text
 PlantGirlsVsZombies/
@@ -73,7 +91,7 @@ PlantGirlsVsZombies/
 ~/Library/Application Support/CrossOver/Bottles/<Bottle>/drive_c/Program Files/ZBC/PlantGirlsVsZombies
 ```
 
-路径可以包含空格，但调用脚本时必须用引号包住。
+路径可以包含空格，但调用脚本时必须用引号包住。后续章节中的 `PGVZ_GAME_DIR` 应指向这个最终目录，例如 `$PWD/local/PlantGirlsVsZombies`。
 
 ## 4. macOS 构建机要求
 
@@ -81,6 +99,7 @@ PlantGirlsVsZombies/
 
 - Apple Silicon Mac；
 - Git、`curl`、`sh`、Perl 和 `shasum`；
+- 可选的 7-Zip 命令行工具 `7z` 或 `7zz`，仅在直接解压自解压安装包时需要；
 - Xcode Command Line Tools 提供的 `codesign`、`plutil`、`sips`、`xattr` 和基础构建支持；
 - 首次安装工具和 NuGet 还原时可访问互联网；
 - 建议至少预留 4 GB 空间。
@@ -363,6 +382,7 @@ fi
 ```text
 BUILDING.md
 README.md
+README.en.md
 config.macos.json
 global.json
 supported-game-builds.tsv

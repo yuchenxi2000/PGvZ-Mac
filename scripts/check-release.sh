@@ -6,7 +6,7 @@ PROJECT_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 
 cd "$PROJECT_ROOT"
 
-for required in BUILDING.md README.md patches/macos-port.patch \
+for required in BUILDING.md README.md README.en.md patches/macos-port.patch \
   supported-game-builds.tsv \
   porting/DynamicHookGenCompat.cs porting/NoWindowIcon.dat \
   packaging/icon/AppIcon-Modern.png; do
