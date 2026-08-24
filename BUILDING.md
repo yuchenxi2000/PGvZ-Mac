@@ -26,13 +26,8 @@
 
 ## 2. 已验证的输入和目标
 
-已验证输入集中记录在 `supported-game-builds.tsv`，当前包括：
-
-| 游戏版本 | `Lawn.exe` 大小 | SHA-256 |
-| --- | ---: | --- |
-| 1.2.2 | 77,074,673 bytes | `f23085f08ccaabb9019356a4316660806b487620b3d55c65e73e4af9b1514c41` |
-| 1.2.3-alpha | 77,074,673 bytes | `58675534920f186591a0e7715029e601075a0b8eb7ddcdab657b417ec7a30b51` |
-| 1.2.5-alpha | 77,078,769 bytes | `ec019f3d8f09d16b2f259b15ad1a9585656b9570007f06f516b625f66cb8be9d` |
+已验证输入的游戏版本、`Lawn.exe` 大小和 SHA-256 统一记录在
+[`supported-game-builds.tsv`](supported-game-builds.tsv)。
 
 目标环境：
 
