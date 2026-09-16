@@ -29,14 +29,18 @@ fi
 ACTUAL_LAWN_SHA256=$(shasum -a 256 "$GAME_DIR/Lawn.exe" | awk '{print $1}')
 ACTUAL_LAWN_SIZE=$(stat -f '%z' "$GAME_DIR/Lawn.exe" 2>/dev/null || wc -c <"$GAME_DIR/Lawn.exe" | tr -d ' ')
 MATCH=$(awk -F '\t' -v hash="$ACTUAL_LAWN_SHA256" '
-  $0 !~ /^#/ && $1 == hash { print $2 "\t" $3; exit }
+  $0 !~ /^#/ && $1 == hash { print $2 "\t" $3 "\t" $4; exit }
 ' "$GAME_BUILDS_FILE")
 
 if [ -n "$MATCH" ]; then
   GAME_VERSION=$(printf '%s\n' "$MATCH" | awk -F '\t' '{print $1}')
   RECORDED_SIZE=$(printf '%s\n' "$MATCH" | awk -F '\t' '{print $2}')
+  MACOS_PATCH=$(printf '%s\n' "$MATCH" | awk -F '\t' '{print $3}')
   echo "Recognized game build: $GAME_VERSION"
   echo "Lawn.exe SHA-256: $ACTUAL_LAWN_SHA256"
+  if [ -n "$MACOS_PATCH" ]; then
+    echo "macOS source patch: $MACOS_PATCH"
+  fi
   if [ -n "$RECORDED_SIZE" ] && [ "$ACTUAL_LAWN_SIZE" != "$RECORDED_SIZE" ]; then
     echo "Warning: manifest size is $RECORDED_SIZE bytes, actual size is $ACTUAL_LAWN_SIZE bytes." >&2
   fi

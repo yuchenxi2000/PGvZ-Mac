@@ -33,7 +33,7 @@ required, keep diagnosing errors until the build is complete. Finally report the
 game version, test results, and any remaining warnings.
 ```
 
-Replace the input path with the installed directory when applicable. An unknown game hash does not stop the workflow; the agent should use patch, compilation, and smoke-test results to determine whether the new version needs adaptation.
+Replace the input path with the installed directory when applicable. An unknown game hash is still extracted and decompiled, then the most recently registered patch is tried by default. If it does not apply cleanly, the agent should create a separate patch for the new build and record its hash-to-patch mapping after compilation and smoke tests pass.
 
 ### Manual build
 
@@ -84,7 +84,7 @@ See [`supported-game-builds.tsv`](supported-game-builds.tsv) for the recognized 
 Tested platform and toolchain:
 
 - Apple Silicon, `osx-arm64`
-- macOS 26.5.2
+- macOS 26.5.2 and 26.6.2
 - .NET SDK 6.0.428 / Runtime 6.0.36
 - ILSpyCmd 8.2.0.7535
 - IronPython 3.4.0 from the local game installation

@@ -12,7 +12,7 @@ fi
 
 "$SCRIPT_DIR/bootstrap-tools.sh"
 "$SCRIPT_DIR/decompile-windows.sh" "$GAME_DIR"
-"$SCRIPT_DIR/apply-macos-port.sh"
+"$SCRIPT_DIR/apply-macos-port.sh" "$GAME_DIR"
 "$SCRIPT_DIR/package-app.sh" "$GAME_DIR"
 
 echo "Native App ready: $SCRIPT_DIR/../dist/PlantGirlsVsZombies.app"

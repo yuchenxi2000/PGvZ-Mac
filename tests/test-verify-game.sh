@@ -17,10 +17,11 @@ printf 'synthetic Lawn executable\n' >"$GAME_DIR/Lawn.exe"
 HASH=$(shasum -a 256 "$GAME_DIR/Lawn.exe" | awk '{print $1}')
 SIZE=$(stat -f '%z' "$GAME_DIR/Lawn.exe" 2>/dev/null || wc -c <"$GAME_DIR/Lawn.exe" | tr -d ' ')
 
-printf '# SHA-256\tversion\tsize\n%s\ttest-version\t%s\n' "$HASH" "$SIZE" >"$MANIFEST"
+printf '# SHA-256\tversion\tsize\tpatch\n%s\ttest-version\t%s\ttest.patch\n' "$HASH" "$SIZE" >"$MANIFEST"
 KNOWN_OUTPUT=$(PGVZ_GAME_BUILDS_FILE="$MANIFEST" \
   "$PROJECT_ROOT/scripts/verify-game.sh" "$GAME_DIR" 2>&1)
 printf '%s\n' "$KNOWN_OUTPUT" | grep -q 'Recognized game build: test-version'
+printf '%s\n' "$KNOWN_OUTPUT" | grep -q 'macOS source patch: test.patch'
 
 printf '# no recognized builds\n' >"$MANIFEST"
 UNKNOWN_OUTPUT=$(PGVZ_GAME_BUILDS_FILE="$MANIFEST" \

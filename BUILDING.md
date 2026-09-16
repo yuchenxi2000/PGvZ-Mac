@@ -9,7 +9,7 @@
 可以提交到 GitHub 的内容包括：
 
 - `scripts/` 中的提取、移植、构建和打包脚本；
-- `patches/macos-port.patch` 中用于互操作的最小源码差异；
+- `patches/` 中按游戏构建版本区分、用于互操作的最小源码差异；
 - `porting/DynamicHookGenCompat.cs` 兼容层；
 - `packaging/` 中的 Info.plist 和重新设计的 macOS 图标；
 - `config.macos.json`、测试和本文档。
@@ -26,7 +26,7 @@
 
 ## 2. 已验证的输入和目标
 
-已验证输入的游戏版本、`Lawn.exe` 大小和 SHA-256 统一记录在
+已验证输入的游戏版本、`Lawn.exe` 大小、SHA-256 和对应补丁统一记录在
 [`supported-game-builds.tsv`](supported-game-builds.tsv)。
 
 目标环境：
@@ -40,9 +40,9 @@ Target Framework: net6.0
 ILSpyCmd: 8.2.0.7535
 ```
 
-已在 macOS 26.5.2 上验证。Info.plist 的最低系统版本目前为 macOS 11.0，但尚未逐个验证所有较早版本。Intel `osx-x64` 也未验证。
+已在 macOS 26.5.2 和 26.6.2 上验证。Info.plist 的最低系统版本目前为 macOS 11.0，但尚未逐个验证所有较早版本。Intel `osx-x64` 也未验证。
 
-哈希的作用是标记测试状态，而不是把构建流程锁死在某一版本。未知哈希会产生警告但继续执行，以便适配新版本；结构缺失、补丁无法完整应用或编译失败仍会停止。新版的程序集布局、ILSpy 输出或源码位置发生变化时，应重新审查并更新补丁，并在全部测试通过后登记新哈希。
+哈希同时用于选择与该构建一起验证过的版本专用补丁。未知哈希仍允许提取和反编译，并默认尝试清单最后一条记录对应的最新补丁；应用前仍执行完整的 `git apply --check`，不匹配时不会留下部分修改。新版适配完成并通过全部测试后，应新增独立补丁并把补丁文件名与新哈希一起登记。
 
 ## 3. 准备游戏文件目录
 
@@ -141,7 +141,7 @@ export PGVZ_GAME_DIR="/absolute/path/to/PlantGirlsVsZombies"
 2. 检查 `Lawn.exe`、`Content/`、`lib/`，并在已验证构建清单中识别 SHA-256；未知哈希只警告；
 3. 用 ILSpy 的 single-file bundle reader 提取程序集到 `artifacts/extracted/windows/`；
 4. 将 `Lawn.dll` 反编译为 `src/Lawn/`；
-5. 应用 `patches/macos-port.patch`，复制 `porting/DynamicHookGenCompat.cs`；
+5. 按 `Lawn.exe` SHA-256 选择已登记的版本补丁，复制 `porting/DynamicHookGenCompat.cs`；
 6. 从 NuGet 还原 macOS MonoGame、IMEHelper、Mono.Unix 和 RuntimeDetour；
 7. 以 `osx-arm64`、self-contained、JIT 模式发布；
 8. 复制本地游戏的 `Content/` 与 `lib/`，生成多分辨率图标，组成 App bundle；
@@ -178,9 +178,9 @@ dist/PlantGirlsVsZombies.app
 ./scripts/verify-game.sh "$PGVZ_GAME_DIR"
 ```
 
-如果哈希存在于 `supported-game-builds.tsv`，脚本会显示识别到的游戏版本。哈希未知时会输出文件大小、SHA-256 和醒目警告，但返回成功并允许反编译继续进行。`Lawn.exe`、`Content/` 或 `lib/` 缺失仍是致命错误。
+如果哈希存在于 `supported-game-builds.tsv`，脚本会显示识别到的游戏版本和对应补丁。哈希未知时会输出文件大小、SHA-256 和醒目警告，但返回成功并允许反编译继续进行。`Lawn.exe`、`Content/` 或 `lib/` 缺失仍是致命错误。
 
-这项宽松策略只表示“允许尝试适配”，不表示未知版本已经兼容。继续观察 `git apply --check`、编译和冒烟测试结果，不要因为编译成功就直接把哈希登记为已验证。
+这项宽松策略只表示“允许提取源码并尝试最新补丁”，不表示未知版本已经兼容。若最新补丁无法完整应用，应以它为起点创建版本专用补丁；完成编译和冒烟测试后，再把哈希与补丁文件名一起登记。
 
 ### 6.3 提取并反编译
 
@@ -206,7 +206,7 @@ rm -rf -- "$PWD/src/Lawn" "$PWD/artifacts" "$PWD/dist"
 ### 6.4 应用移植层并还原依赖
 
 ```sh
-./scripts/apply-macos-port.sh
+./scripts/apply-macos-port.sh "$PGVZ_GAME_DIR"
 ```
 
 移植层主要完成：
@@ -215,14 +215,14 @@ rm -rf -- "$PWD/src/Lawn" "$PWD/artifacts" "$PWD/dist"
 - 用 `MonoGame.Framework.DesktopGL` 替换 Windows MonoGame 程序集；
 - 使用跨平台 IMEHelper、Mono.Unix 与 RuntimeDetour 25.3.6；
 - 为 IMEHelper 0.10.0 所硬编码的 `libSDL2-2.0.0.dylib` 创建兼容符号链接，指向 MonoGame 提供的同一份 `libSDL2.dylib`；
-- 修正 ILSpy 8.2 对部分 `char switch` 和 dynamic event IL 的反编译结果；
+- 在版本专用补丁中修正 ILSpy 8.2 对部分 `char switch` 和 dynamic event IL 的反编译结果；
 - 在非 Windows 平台避开 `user32!SetTimer` 和 WindowsIdentity；
 - macOS 构建把 `porting/NoWindowIcon.dat` 作为无效的 `Icon.bmp` 资源嵌入，使 MonoGame 跳过 `SDL_SetWindowIcon`，避免运行时覆盖 App 的 Dock 图标；
 - 将只读 App 资源与可写用户数据分离；
 - 把 IronPython 标准库和外部 `mods/` 加入搜索路径；
 - 用 `DynamicHookGenCompat.cs` 保持游戏和 Python 模组原有的动态 Hook API。
 
-`git apply --check` 会先确认补丁完全匹配，失败时不会留下半应用状态。
+脚本根据 `Lawn.exe` SHA-256 从 `supported-game-builds.tsv` 选择完整补丁。`macos-port-1.2.2.patch` 最早为 1.2.2 制作，并已验证可复用于清单中的 1.2.3、1.2.5 和 1.2.6 构建；1.3.0 使用 `macos-port-1.3.0.patch`。未知哈希默认使用清单最后一条记录对应的补丁。`git apply --check` 会先确认所选补丁完全匹配，失败时不会留下半应用状态。
 
 ### 6.5 可选：未打包运行
 
@@ -393,7 +393,7 @@ tests/
 
 ### `WARNING: unrecognized Lawn.exe build`
 
-输入不在 `supported-game-builds.tsv` 的已验证清单中。脚本会继续，这是适配新版本的正常入口。记录警告中的哈希，检查补丁、编译和所有冒烟测试；全部通过后再向清单添加一行。若并未预期游戏升级，应先检查安装来源和文件完整性。
+输入不在 `supported-game-builds.tsv` 的已验证清单中。提取和反编译会继续，应用移植层时会警告并尝试清单中最后登记的最新补丁。如果补丁无法完整匹配，脚本会在修改源码前停止；此时应记录新哈希，以最新补丁为起点创建独立补丁，完成编译和全部冒烟测试后，再把哈希、版本、大小和补丁文件名加入清单。若并未预期游戏升级，应先检查安装来源和文件完整性。
 
 ### `Refusing to overwrite existing source directory`
 
@@ -401,11 +401,11 @@ tests/
 
 ### `The macOS patch does not match this decompiled source tree`
 
-通常是新游戏版本改变了源码结构，或 ILSpy 版本不一致。确认使用仓库固定的 ILSpy 后，根据 `git apply --check` 输出重新审查和调整移植补丁；不能仅登记新哈希来跳过这一步。
+通常是游戏文件与清单记录不一致、版本专用补丁有误，或 ILSpy 版本不一致。确认输入哈希和固定 ILSpy 后，根据 `git apply --check` 输出审查所选补丁；不要让新版本复用无法完整匹配的旧补丁。
 
 ### NuGet 还原失败
 
-首次构建必须联网访问 NuGet。检查代理、证书和网络后重新执行 `scripts/apply-macos-port.sh`；已经应用的补丁会被识别，不会重复应用。
+首次构建必须联网访问 NuGet。检查代理、证书和网络后使用游戏目录重新执行 `scripts/apply-macos-port.sh "$PGVZ_GAME_DIR"`；已经应用的补丁会被识别，不会重复应用。
 
 ### 图标仍显示旧版本
 
