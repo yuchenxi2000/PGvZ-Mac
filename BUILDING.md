@@ -222,7 +222,7 @@ rm -rf -- "$PWD/src/Lawn" "$PWD/artifacts" "$PWD/dist"
 - 把 IronPython 标准库和外部 `mods/` 加入搜索路径；
 - 用 `DynamicHookGenCompat.cs` 保持游戏和 Python 模组原有的动态 Hook API。
 
-脚本根据 `Lawn.exe` SHA-256 从 `supported-game-builds.tsv` 选择完整补丁。`macos-port-1.2.2.patch` 最早为 1.2.2 制作，并已验证可复用于清单中的 1.2.3、1.2.5 和 1.2.6 构建；1.3.0 使用 `macos-port-1.3.0.patch`。未知哈希默认使用清单最后一条记录对应的补丁。`git apply --check` 会先确认所选补丁完全匹配，失败时不会留下半应用状态。
+脚本根据 `Lawn.exe` SHA-256 从 `supported-game-builds.tsv` 选择完整补丁。未知哈希默认使用清单最后一条记录对应的补丁。`git apply --check` 会先确认所选补丁完全匹配，失败时不会留下半应用状态。
 
 ### 6.5 可选：未打包运行
 
