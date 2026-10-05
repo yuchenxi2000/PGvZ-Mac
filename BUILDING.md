@@ -241,7 +241,7 @@ rm -rf -- "$PWD/src/Lawn" "$PWD/artifacts" "$PWD/dist"
 
 发布参数明确禁用了 AOT、裁剪和 ReadyToRun。IronPython、反射与 RuntimeDetour 都依赖完整元数据和 JIT，不应打开这些优化。
 
-打包脚本从反编译项目的 `Properties/AssemblyInfo.cs` 读取 `AssemblyFileVersion` 和 `AssemblyInformationalVersion`，自动写入 `Info.plist`。因此 App 版本会随输入游戏变化，而不是固定在仓库模板中的某个版本。`CFBundleVersion` 由四段文件版本编码为单调递增的纯数字（例如 `1.2.3.0` 变成 `1020300`），避免覆盖安装时退回旧构建号；`PGVZGameVersion` 和 `PGVZLawnSHA256` 也会写入成品，便于追溯其输入。
+打包脚本从反编译项目的 `Properties/AssemblyInfo.cs` 读取 `AssemblyFileVersion` 和 `AssemblyInformationalVersion`，自动写入 `Info.plist`。因此 App 版本会随输入游戏变化，而不是固定在仓库模板中的某个版本。`CFBundleVersion` 由四段文件版本编码为单调递增的纯数字，避免覆盖安装时退回旧构建号；`PGVZGameVersion` 和 `PGVZLawnSHA256` 也会写入成品，便于追溯其输入。
 
 App 结构概要：
 
@@ -376,6 +376,7 @@ fi
 预期可跟踪的核心树为：
 
 ```text
+AGENTS.md
 BUILDING.md
 README.md
 README.en.md

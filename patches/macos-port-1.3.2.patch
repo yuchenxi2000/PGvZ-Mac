@@ -1,0 +1,844 @@
+diff --git a/Lawn.csproj b/Lawn.csproj
+index 3f41d71..f467b82 100644
+--- a/Lawn.csproj
++++ b/Lawn.csproj
+@@ -2,15 +2,20 @@
+   <PropertyGroup>
+     <AssemblyName>Lawn</AssemblyName>
+     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+-    <OutputType>WinExe</OutputType>
+-    <TargetFramework>netcoreapp6.0</TargetFramework>
+-    <PlatformTarget>x64</PlatformTarget>
++    <OutputType>Exe</OutputType>
++    <TargetFramework>net6.0</TargetFramework>
++    <PlatformTarget>AnyCPU</PlatformTarget>
++    <PublishAot>False</PublishAot>
++    <PublishTrimmed>False</PublishTrimmed>
++    <PublishReadyToRun>False</PublishReadyToRun>
++    <TieredCompilation>False</TieredCompilation>
++    <UseSharedCompilation>False</UseSharedCompilation>
+   </PropertyGroup>
+   <PropertyGroup>
+-    <LangVersion>11.0</LangVersion>
++    <LangVersion>Preview</LangVersion>
+     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+   </PropertyGroup>
+-  <PropertyGroup>
++  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('windows'))">
+     <ApplicationIcon>app.ico</ApplicationIcon>
+     <ApplicationManifest>app.manifest</ApplicationManifest>
+     <RootNamespace />
+@@ -21,7 +26,8 @@
+     <None Remove="Lawn_PCGL.Microsoft.Xna.Framework.RuntimeProfile" />
+     <None Remove="Lawn_PCGL.Microsoft.Xna.Framework.XlastConfiguration" />
+     <EmbeddedResource Include="Icon.ico" LogicalName="Icon.ico" />
+-    <EmbeddedResource Include="Icon.bmp" LogicalName="Icon.bmp" />
++    <EmbeddedResource Include="Icon.bmp" LogicalName="Icon.bmp" Condition="$([MSBuild]::IsOSPlatform('windows'))" />
++    <EmbeddedResource Include="../../porting/NoWindowIcon.dat" Link="NoWindowIcon.dat" LogicalName="Icon.bmp" Condition="$([MSBuild]::IsOSPlatform('osx'))" />
+     <EmbeddedResource Include="Lawn_PCGL.Microsoft.Xna.Framework.RuntimeProfile" LogicalName="Lawn_PCGL.Microsoft.Xna.Framework.RuntimeProfile" />
+     <EmbeddedResource Include="Lawn_PCGL.Microsoft.Xna.Framework.XlastConfiguration" LogicalName="Lawn_PCGL.Microsoft.Xna.Framework.XlastConfiguration" />
+   </ItemGroup>
+@@ -35,14 +41,14 @@
+     <Reference Include="Microsoft.Scripting">
+       <HintPath>../../artifacts/extracted/windows/Microsoft.Scripting.dll</HintPath>
+     </Reference>
+-    <Reference Include="MonoMod.RuntimeDetour">
+-      <HintPath>../../artifacts/extracted/windows/MonoMod.RuntimeDetour.dll</HintPath>
+-    </Reference>
+     <Reference Include="IronPython">
+       <HintPath>../../artifacts/extracted/windows/IronPython.dll</HintPath>
+     </Reference>
+-    <Reference Include="MonoGame.Framework">
+-      <HintPath>../../artifacts/extracted/windows/MonoGame.Framework.dll</HintPath>
++    <Reference Include="IronPython.Modules">
++      <HintPath>../../artifacts/extracted/windows/IronPython.Modules.dll</HintPath>
++    </Reference>
++    <Reference Include="IronPython.SQLite">
++      <HintPath>../../artifacts/extracted/windows/IronPython.SQLite.dll</HintPath>
+     </Reference>
+     <Reference Include="spine-monogame">
+       <HintPath>../../artifacts/extracted/windows/spine-monogame.dll</HintPath>
+@@ -50,17 +56,15 @@
+     <Reference Include="FontStashSharp.MonoGame">
+       <HintPath>../../artifacts/extracted/windows/FontStashSharp.MonoGame.dll</HintPath>
+     </Reference>
+-    <Reference Include="MonoGame.IMEHelper.Common">
+-      <HintPath>../../artifacts/extracted/windows/MonoGame.IMEHelper.Common.dll</HintPath>
+-    </Reference>
+-    <Reference Include="MonoGame.IMEHelper">
+-      <HintPath>../../artifacts/extracted/windows/MonoGame.IMEHelper.dll</HintPath>
+-    </Reference>
+     <Reference Include="MersenneTwister">
+       <HintPath>../../artifacts/extracted/windows/MersenneTwister.dll</HintPath>
+     </Reference>
+     <Reference Include="Microsoft.Dynamic">
+       <HintPath>../../artifacts/extracted/windows/Microsoft.Dynamic.dll</HintPath>
+     </Reference>
++    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.1.303" />
++    <PackageReference Include="MonoGame.IMEHelper.DesktopGL" Version="0.10.0" />
++    <PackageReference Include="Mono.Unix" Version="7.1.0-final.1.21458.1" />
++    <PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.6" />
+   </ItemGroup>
+-</Project>
+\ No newline at end of file
++</Project>
+diff --git a/Lawn/Board.cs b/Lawn/Board.cs
+index 24d72fa..d3e4a07 100644
+--- a/Lawn/Board.cs
++++ b/Lawn/Board.cs
+@@ -2554,10 +2554,10 @@ public class Board : Widget, ButtonListener, AlmanacListener
+ 			}
+ 			switch (Random.Shared.Next(IsPlantingSoundGuaranteed(thePlant) ? 2 : 5))
+ 			{
+-			case 0:
++			case (char)0:
+ 				PlantVoice.Play(seedType, thePlant.mImitaterType, PlantVoice.VoiceType.Plant1);
+ 				break;
+-			case 1:
++			case (char)1:
+ 				PlantVoice.Play(seedType, thePlant.mImitaterType, PlantVoice.VoiceType.Plant2);
+ 				break;
+ 			}
+@@ -2568,10 +2568,10 @@ public class Board : Widget, ButtonListener, AlmanacListener
+ 	{
+ 		switch (Random.Shared.Next(IsSleepingSoundGuaranteed(thePlant) ? 2 : 5))
+ 		{
+-		case 0:
++		case (char)0:
+ 			PlantVoice.Play(thePlant.mSeedType, thePlant.mImitaterType, PlantVoice.VoiceType.Sleep1);
+ 			break;
+-		case 1:
++		case (char)1:
+ 			PlantVoice.Play(thePlant.mSeedType, thePlant.mImitaterType, PlantVoice.VoiceType.Sleep2);
+ 			break;
+ 		}
+@@ -3835,16 +3835,16 @@ public class Board : Widget, ButtonListener, AlmanacListener
+ 			int num2 = 0;
+ 			switch (theChar)
+ 			{
+-			case 48L:
+-			case 49L:
+-			case 50L:
+-			case 51L:
+-			case 52L:
+-			case 53L:
+-			case 54L:
+-			case 55L:
+-			case 56L:
+-			case 57L:
++			case (char)48:
++			case (char)49:
++			case (char)50:
++			case (char)51:
++			case (char)52:
++			case (char)53:
++			case (char)54:
++			case (char)55:
++			case (char)56:
++			case (char)57:
+ 			{
+ 				int num3 = ((theChar == 48u) ? 9 : ((char)theChar - 49));
+ 				if (mSeedBank.mSeedPackets[num3].CenterY() > Constants.BOARD_HEIGHT || !mSeedBank.IsSeedPacketAccessible(mSeedBank.mSeedPackets[num3]))
+@@ -3859,113 +3859,113 @@ public class Board : Widget, ButtonListener, AlmanacListener
+ 				}
+ 				break;
+ 			}
+-			case 96L:
++			case (char)96:
+ 				if (CanUseCombatTool(GameObjectType.Shovel))
+ 				{
+ 					RefreshSeedPacketFromCursor();
+ 					PickUpTool(GameObjectType.Shovel);
+ 				}
+ 				break;
+-			case 32L:
++			case (char)32:
+ 				if (mApp.CanPauseNow())
+ 				{
+ 					mApp.PlaySample(Resources.SOUND_GRAVEBUTTON);
+ 					mManualPaused = !mManualPaused;
+ 				}
+ 				break;
+-			case 9L:
++			case (char)9:
+ 				if (mAccelerateButton != null)
+ 				{
+ 					mApp.PlaySample(Resources.SOUND_GRAVEBUTTON);
+ 					AccelerationIncrease();
+ 				}
+ 				break;
+-			case 113L:
++			case (char)113:
+ 				flag = true;
+ 				num = 2;
+ 				num2 = 1;
+ 				break;
+-			case 119L:
++			case (char)119:
+ 				flag = true;
+ 				num = 2;
+ 				num2 = 2;
+ 				break;
+-			case 101L:
++			case (char)101:
+ 				flag = true;
+ 				num = 2;
+ 				num2 = 3;
+ 				break;
+-			case 114L:
++			case (char)114:
+ 				flag = true;
+ 				num = 2;
+ 				num2 = 4;
+ 				break;
+-			case 116L:
++			case (char)116:
+ 				flag = true;
+ 				num = 2;
+ 				num2 = 5;
+ 				break;
+-			case 121L:
++			case (char)121:
+ 				flag = true;
+ 				num = 2;
+ 				num2 = 6;
+ 				break;
+-			case 97L:
++			case (char)97:
+ 				flag = true;
+ 				num = 4;
+ 				num2 = 1;
+ 				break;
+-			case 115L:
++			case (char)115:
+ 				flag = true;
+ 				num = 4;
+ 				num2 = 2;
+ 				break;
+-			case 100L:
++			case (char)100:
+ 				flag = true;
+ 				num = 4;
+ 				num2 = 3;
+ 				break;
+-			case 102L:
++			case (char)102:
+ 				flag = true;
+ 				num = 4;
+ 				num2 = 4;
+ 				break;
+-			case 103L:
++			case (char)103:
+ 				flag = true;
+ 				num = 4;
+ 				num2 = 5;
+ 				break;
+-			case 104L:
++			case (char)104:
+ 				flag = true;
+ 				num = 4;
+ 				num2 = 6;
+ 				break;
+-			case 122L:
++			case (char)122:
+ 				flag = true;
+ 				num = 6;
+ 				num2 = 1;
+ 				break;
+-			case 120L:
++			case (char)120:
+ 				flag = true;
+ 				num = 6;
+ 				num2 = 2;
+ 				break;
+-			case 99L:
++			case (char)99:
+ 				flag = true;
+ 				num = 6;
+ 				num2 = 3;
+ 				break;
+-			case 118L:
++			case (char)118:
+ 				flag = true;
+ 				num = 6;
+ 				num2 = 4;
+ 				break;
+-			case 98L:
++			case (char)98:
+ 				flag = true;
+ 				num = 6;
+ 				num2 = 5;
+ 				break;
+-			case 110L:
++			case (char)110:
+ 				flag = true;
+ 				num = 6;
+ 				num2 = 6;
+@@ -4418,10 +4418,10 @@ public class Board : Widget, ButtonListener, AlmanacListener
+ 					}
+ 					switch (j)
+ 					{
+-					case 5:
++					case (char)5:
+ 						AddPlant(j, i, SeedType.Torchwood, SeedType.None);
+ 						continue;
+-					case 6:
++					case (char)6:
+ 						AddPlant(j, i, SeedType.Splitpea, SeedType.None);
+ 						continue;
+ 					}
+@@ -7037,10 +7037,10 @@ public class Board : Widget, ButtonListener, AlmanacListener
+ 		{
+ 			switch (mNumPackets)
+ 			{
+-			case 8:
++			case (char)8:
+ 				num += (int)Constants.InvertAndScale(5f);
+ 				break;
+-			case 10:
++			case (char)10:
+ 				num += (int)Constants.InvertAndScale(-3f);
+ 				break;
+ 			}
+@@ -9523,25 +9523,25 @@ public class Board : Widget, ButtonListener, AlmanacListener
+ 				RandomNumbers.Seed(GetLevelRandSeed());
+ 				switch (RandomNumbers.NextNumber(7))
+ 				{
+-				case 0:
++				case (char)0:
+ 					mBackground = BackgroundType.Num1Day;
+ 					break;
+-				case 1:
++				case (char)1:
+ 					mBackground = BackgroundType.Num2Night;
+ 					break;
+-				case 2:
++				case (char)2:
+ 					mBackground = BackgroundType.Num3Pool;
+ 					break;
+-				case 3:
++				case (char)3:
+ 					mBackground = BackgroundType.Num4Fog;
+ 					break;
+-				case 4:
++				case (char)4:
+ 					mBackground = BackgroundType.Num5Roof;
+ 					break;
+-				case 5:
++				case (char)5:
+ 					mBackground = BackgroundType.HighGround;
+ 					break;
+-				case 6:
++				case (char)6:
+ 					mBackground = BackgroundType.BigPool;
+ 					break;
+ 				}
+@@ -10092,28 +10092,28 @@ public class Board : Widget, ButtonListener, AlmanacListener
+ 			(Image, int, int) tuple;
+ 			switch (num)
+ 			{
+-			case 1:
++			case (char)1:
+ 				if (num2 != 1)
+ 				{
+ 					goto default;
+ 				}
+ 				tuple = (AtlasResources.IMAGE_ACCELERATION_01, 4, 0);
+ 				break;
+-			case 2:
++			case (char)2:
+ 				if (num2 != 1)
+ 				{
+ 					goto default;
+ 				}
+ 				tuple = (AtlasResources.IMAGE_ACCELERATION_02, 4, 0);
+ 				break;
+-			case 3:
++			case (char)3:
+ 				if (num2 != 1)
+ 				{
+ 					goto default;
+ 				}
+ 				tuple = (AtlasResources.IMAGE_ACCELERATION_03, 4, 0);
+ 				break;
+-			case 0:
++			case (char)0:
+ 				tuple = (AtlasResources.IMAGE_ACCELERATION_PAUSE, 12, 5);
+ 				break;
+ 			default:
+@@ -10213,12 +10213,12 @@ public class Board : Widget, ButtonListener, AlmanacListener
+ 			ReanimationType theReanimationType;
+ 			switch (i)
+ 			{
+-			case 0:
+-			case 3:
++			case (char)0:
++			case (char)3:
+ 				theReanimationType = (StageIsNight() ? ReanimationType.NightBushes3 : ReanimationType.Bushes3);
+ 				break;
+-			case 2:
+-			case 5:
++			case (char)2:
++			case (char)5:
+ 				theReanimationType = (StageIsNight() ? ReanimationType.NightBushes4 : ReanimationType.Bushes4);
+ 				break;
+ 			default:
+diff --git a/Lawn/PlantsVsZombies.cs b/Lawn/PlantsVsZombies.cs
+index a8fdeb7..dd8d8f7 100644
+--- a/Lawn/PlantsVsZombies.cs
++++ b/Lawn/PlantsVsZombies.cs
+@@ -37,8 +37,16 @@ internal class PlantsVsZombies
+ 		ParseCommandLineArguments();
+ 		Main main = new Main();
+ 		LawnGameConfig config = null;
+-		LawnGameConfig lawnGameConfig = main.SyncGameConfigFromJson(in config, Path.Join(AppDomain.CurrentDomain.BaseDirectory, "config.json"), isWriting: false);
+-		if (lawnGameConfig.mCustomConfigPath != null)
++		LawnGameConfig lawnGameConfig = main.SyncGameConfigFromJson(in config, Path.Join(Sexy.Main.GetResourceRoot(), "config.json"), isWriting: false);
++		if (OperatingSystem.IsMacOS())
++		{
++			Directory.CreateDirectory(Sexy.Main.GetDefaultStoragePath());
++			config = null;
++			lawnGameConfig += main.SyncGameConfigFromJson(in config, Sexy.Main.GetUserConfigPath(), isWriting: false);
++			lawnGameConfig.mStoragePath = Sexy.Main.GetDefaultStoragePath();
++			lawnGameConfig.mCustomConfigPath = Sexy.Main.GetUserConfigPath();
++		}
++		else if (lawnGameConfig.mCustomConfigPath != null)
+ 		{
+ 			LawnGameConfig lawnGameConfig2 = lawnGameConfig;
+ 			config = null;
+diff --git a/Lawn/ZBCheatDialog.cs b/Lawn/ZBCheatDialog.cs
+index 55f9a6e..196c7a8 100644
+--- a/Lawn/ZBCheatDialog.cs
++++ b/Lawn/ZBCheatDialog.cs
+@@ -123,27 +123,13 @@ internal class ZBCheatDialog : LawnDialog, SliderListener, CheckboxListener
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.Coin;
+ 				Action<Action<Coin>, Coin> action = Update;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.add_Update(action);
+-				}
+-				else
+-				{
+-					val.Update += action;
+-				}
++				val.Update += action;
+ 			}
+ 			else
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.Coin;
+ 				Action<Action<Coin>, Coin> action = Update;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.remove_Update(action);
+-				}
+-				else
+-				{
+-					val.Update -= action;
+-				}
++				val.Update -= action;
+ 			}
+ 			_enableCoinAutoCollect = value;
+ 			static void Update(Action<Coin> orig, Coin self)
+@@ -191,14 +177,7 @@ internal class ZBCheatDialog : LawnDialog, SliderListener, CheckboxListener
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.Board;
+ 				Action<Action<Board>, Board> action = Board__UpdateGame;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.add_UpdateGame(action);
+-				}
+-				else
+-				{
+-					val.UpdateGame += action;
+-				}
++				val.UpdateGame += action;
+ 				val = DynamicHookGen.On.Lawn.Board;
+ 				action = Board__UpdateGridItems;
+ 				val.UpdateGridItems += action;
+@@ -210,14 +189,7 @@ internal class ZBCheatDialog : LawnDialog, SliderListener, CheckboxListener
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.Board;
+ 				Action<Action<Board>, Board> action = Board__UpdateGame;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.remove_UpdateGame(action);
+-				}
+-				else
+-				{
+-					val.UpdateGame -= action;
+-				}
++				val.UpdateGame -= action;
+ 				val = DynamicHookGen.On.Lawn.Board;
+ 				action = Board__UpdateGridItems;
+ 				val.UpdateGridItems -= action;
+@@ -292,27 +264,13 @@ internal class ZBCheatDialog : LawnDialog, SliderListener, CheckboxListener
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.Board;
+ 				Action<Action<Board, Zombie>, Board, Zombie> action = ZombiesWon;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.add_ZombiesWon(action);
+-				}
+-				else
+-				{
+-					val.ZombiesWon += action;
+-				}
++				val.ZombiesWon += action;
+ 			}
+ 			else
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.Board;
+ 				Action<Action<Board, Zombie>, Board, Zombie> action = ZombiesWon;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.remove_ZombiesWon(action);
+-				}
+-				else
+-				{
+-					val.ZombiesWon -= action;
+-				}
++				val.ZombiesWon -= action;
+ 			}
+ 			_enableNoZombieInHouse = value;
+ 			static void ZombiesWon(Action<Board, Zombie> orig, Board self, Zombie aZombie)
+@@ -338,14 +296,7 @@ internal class ZBCheatDialog : LawnDialog, SliderListener, CheckboxListener
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.SeedPacket;
+ 				Action<Action<SeedPacket>, SeedPacket> action = SeedPacket__WasPlanted;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.add_WasPlanted(action);
+-				}
+-				else
+-				{
+-					val.WasPlanted += action;
+-				}
++				val.WasPlanted += action;
+ 				val = DynamicHookGen.On.Lawn.SeedPacket;
+ 				Action<Action<SeedPacket, SeedType, SeedType>, SeedPacket, SeedType, SeedType> action2 = SeedPacket__SetPacketType;
+ 				val.SetPacketType += action2;
+@@ -354,14 +305,7 @@ internal class ZBCheatDialog : LawnDialog, SliderListener, CheckboxListener
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.SeedPacket;
+ 				Action<Action<SeedPacket>, SeedPacket> action = SeedPacket__WasPlanted;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.remove_WasPlanted(action);
+-				}
+-				else
+-				{
+-					val.WasPlanted -= action;
+-				}
++				val.WasPlanted -= action;
+ 				val = DynamicHookGen.On.Lawn.SeedPacket;
+ 				Action<Action<SeedPacket, SeedType, SeedType>, SeedPacket, SeedType, SeedType> action2 = SeedPacket__SetPacketType;
+ 				val.SetPacketType -= action2;
+@@ -402,14 +346,7 @@ internal class ZBCheatDialog : LawnDialog, SliderListener, CheckboxListener
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.SeedPacket;
+ 				Action<Action<SeedPacket>, SeedPacket> action = SeedPacket__WasPlanted;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.add_WasPlanted(action);
+-				}
+-				else
+-				{
+-					val.WasPlanted += action;
+-				}
++				val.WasPlanted += action;
+ 				val = DynamicHookGen.On.Lawn.SeedPacket;
+ 				Action<Action<SeedPacket, SeedType, SeedType>, SeedPacket, SeedType, SeedType> action2 = SeedPacket__SetPacketType;
+ 				val.SetPacketType += action2;
+@@ -418,14 +355,7 @@ internal class ZBCheatDialog : LawnDialog, SliderListener, CheckboxListener
+ 			{
+ 				dynamic val = DynamicHookGen.On.Lawn.SeedPacket;
+ 				Action<Action<SeedPacket>, SeedPacket> action = SeedPacket__WasPlanted;
+-				if (/*OpCode not supported: DynamicIsEventInstruction*/)
+-				{
+-					val.remove_WasPlanted(action);
+-				}
+-				else
+-				{
+-					val.WasPlanted -= action;
+-				}
++				val.WasPlanted -= action;
+ 				val = DynamicHookGen.On.Lawn.SeedPacket;
+ 				Action<Action<SeedPacket, SeedType, SeedType>, SeedPacket, SeedType, SeedType> action2 = SeedPacket__SetPacketType;
+ 				val.SetPacketType -= action2;
+diff --git a/LawnMod/IronPyInteractive.cs b/LawnMod/IronPyInteractive.cs
+index 285f0e5..c26a38b 100644
+--- a/LawnMod/IronPyInteractive.cs
++++ b/LawnMod/IronPyInteractive.cs
+@@ -274,7 +274,7 @@ internal class IronPyInteractive
+ 			}
+ 			if (runModules)
+ 			{
+-				RunAllModules();
++				RunAllModules(Main.GetModsPath());
+ 			}
+ 			static object DebugExec(string code)
+ 			{
+@@ -298,6 +298,7 @@ internal class IronPyInteractive
+ 			string item = Main.FetchIronPythonStdLib(mPyEnj.LanguageVersion);
+ 			ICollection<string> searchPaths = mPyEnj.GetSearchPaths();
+ 			searchPaths.Add(item);
++			searchPaths.Add(Main.GetModsPath());
+ 			mPyEnj.SetSearchPaths(searchPaths);
+ 		}
+ 
+diff --git a/LawnMod/MonoModUtils.cs b/LawnMod/MonoModUtils.cs
+index f71e291..add07db 100644
+--- a/LawnMod/MonoModUtils.cs
++++ b/LawnMod/MonoModUtils.cs
+@@ -13,14 +13,15 @@ public static class MonoModUtils
+ 	{
+ 		private readonly Delegate mHookDelegate;
+ 
+-		private readonly string mMethodName;
++		private readonly MethodInfo mMethod;
+ 
+-		private readonly DynamicHookGen mParentalNode;
++		private Hook mHook;
+ 
+-		internal HookResult(MethodInfo method, Delegate hookDelegate, DynamicHookGen.HookType hookType, bool initialize = true)
++		private bool mIsHooked;
++
++		internal HookResult(MethodInfo method, Delegate hookDelegate, bool initialize = true)
+ 		{
+-			mParentalNode = new DynamicHookGen(method.DeclaringType, hookType);
+-			mMethodName = method.Name;
++			mMethod = method;
+ 			mHookDelegate = hookDelegate;
+ 			if (initialize)
+ 			{
+@@ -30,7 +31,8 @@ public static class MonoModUtils
+ 
+ 		private void Initialize()
+ 		{
+-			DynamicHelper.SetDynamicMember(mParentalNode, mMethodName, (DynamicHookGen)DynamicHelper.GetDynamicMember(mParentalNode, mMethodName) + mHookDelegate);
++			mHook = new Hook(mMethod, mHookDelegate);
++			mIsHooked = true;
+ 		}
+ 
+ 		public override bool TryInvoke(InvokeBinder binder, object[] args, out object result)
+@@ -46,7 +48,13 @@ public static class MonoModUtils
+ 
+ 		public void UnHook()
+ 		{
+-			DynamicHelper.SetDynamicMember(mParentalNode, mMethodName, (DynamicHookGen)DynamicHelper.GetDynamicMember(mParentalNode, mMethodName) - mHookDelegate);
++			if (!mIsHooked)
++			{
++				return;
++			}
++			mHook.Dispose();
++			mHook = null;
++			mIsHooked = false;
+ 		}
+ 	}
+ 
+@@ -222,11 +230,11 @@ public static class MonoModUtils
+ 		}
+ 	}
+ 
+-	public static DynamicHookGen On = DynamicHookGen.On;
++	public static dynamic On = DynamicHookGen.On;
+ 
+-	public static DynamicHookGen OnOrIL = DynamicHookGen.OnOrIL;
++	public static dynamic OnOrIL = DynamicHookGen.OnOrIL;
+ 
+-	public static DynamicHookGen IL = DynamicHookGen.IL;
++	public static dynamic IL = DynamicHookGen.IL;
+ 
+ 	public static MethodBase StripPythonMethodDesc(in dynamic o)
+ 	{
+@@ -370,7 +378,7 @@ public static class MonoModUtils
+ 		return delegate(dynamic hookerDynScriptFunc)
+ 		{
+ 			Delegate hookDelegate = ((Func<object, Delegate>)f)(hookerDynScriptFunc);
+-			return new HookResult(method, hookDelegate, hookType);
++			return new HookResult(method, hookDelegate);
+ 		};
+ 	}
+ 
+diff --git a/Microsoft/Xna/Framework/GamerServices/MonoLiveGuide.cs b/Microsoft/Xna/Framework/GamerServices/MonoLiveGuide.cs
+index b054370..52c6739 100644
+--- a/Microsoft/Xna/Framework/GamerServices/MonoLiveGuide.cs
++++ b/Microsoft/Xna/Framework/GamerServices/MonoLiveGuide.cs
+@@ -101,7 +101,7 @@ internal class MonoLiveGuide : DrawableGameComponent
+ 		}
+ 		if ((gameTime.TotalGameTime - gt).TotalSeconds > 5.0)
+ 		{
+-			string text = WindowsIdentity.GetCurrent().Name;
++			string text = OperatingSystem.IsWindows() ? WindowsIdentity.GetCurrent().Name : Environment.UserName;
+ 			if (text.Contains("\\"))
+ 			{
+ 				int num = text.IndexOf("\\") + 1;
+diff --git a/Sexy/Main.cs b/Sexy/Main.cs
+index 275b773..7215ef3 100644
+--- a/Sexy/Main.cs
++++ b/Sexy/Main.cs
+@@ -239,7 +239,7 @@ public class Main : Game
+ 		{
+ 			if (mGameConfig.mStoragePath == null)
+ 			{
+-				return null;
++				return GetDefaultStoragePath();
+ 			}
+ 			return Environment.ExpandEnvironmentVariables(mGameConfig.mStoragePath);
+ 		}
+@@ -339,12 +339,46 @@ public class Main : Game
+ 
+ 	internal string FetchApplicationStoragePath()
+ 	{
+-		return applicationStoragePath ?? AppContext.BaseDirectory;
++		return applicationStoragePath;
++	}
++
++	internal static string GetDefaultStoragePath()
++	{
++		if (OperatingSystem.IsMacOS())
++		{
++			return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "ZBC", "PlantGirlsVsZombies");
++		}
++		return AppContext.BaseDirectory;
++	}
++
++	internal static string GetResourceRoot()
++	{
++		string bundledResources = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Resources"));
++		if (Directory.Exists(Path.Combine(bundledResources, "Content")))
++		{
++			return bundledResources;
++		}
++		return AppContext.BaseDirectory;
++	}
++
++	internal static string GetUserConfigPath()
++	{
++		return Path.Combine(GetDefaultStoragePath(), "user_config.json");
++	}
++
++	internal static string GetModsPath()
++	{
++		return Path.Combine(GetDefaultStoragePath(), "mods");
+ 	}
+ 
+ 	internal static string FetchIronPythonStdLib(Version version)
+ 	{
+-		return $"./IronPython.StdLib.{version.Major}.{version.Minor}.{version.Build}.zip";
++		string unpackedStdLib = Path.Combine(GetResourceRoot(), "lib");
++		if (Directory.Exists(unpackedStdLib))
++		{
++			return unpackedStdLib;
++		}
++		return Path.Combine(GetResourceRoot(), $"IronPython.StdLib.{version.Major}.{version.Minor}.{version.Build}.zip");
+ 	}
+ 
+ 	internal static void IronPythonConfigureWorkDir()
+@@ -353,33 +387,28 @@ public class Main : Game
+ 
+ 	protected override void Initialize()
+ 	{
+-		if (mGameConfig.mStoragePath != null)
++		string storagePath = applicationStoragePath;
++		try
+ 		{
+-			string text = Environment.ExpandEnvironmentVariables(mGameConfig.mStoragePath);
+-			bool flag = true;
+-			if (!Directory.Exists(text))
+-			{
+-				try
+-				{
+-					Directory.CreateDirectory(text);
+-					flag = true;
+-				}
+-				catch (Exception)
+-				{
+-					mGameConfig.mStoragePath = null;
+-					flag = false;
+-				}
+-			}
+-			if (flag)
++			Directory.CreateDirectory(storagePath);
++			Directory.SetCurrentDirectory(storagePath);
++			if (OperatingSystem.IsMacOS())
+ 			{
+-				Directory.SetCurrentDirectory(text);
++				EnsureDirectoryLink(Path.Combine(storagePath, "Content"), Path.Combine(GetResourceRoot(), "Content"));
++				string ironPythonRoot = Path.Combine(storagePath, "IronPython");
++				Directory.CreateDirectory(ironPythonRoot);
++				EnsureDirectoryLink(Path.Combine(ironPythonRoot, "Libs"), Path.Combine(GetResourceRoot(), "lib"));
+ 			}
+ 		}
++		catch (Exception ex)
++		{
++			Debug.Log(DebugType.Warn, $"Unable to prepare storage path <{storagePath}>: {ex.Message}");
++		}
+ 		base.Window.OrientationChanged += Window_OrientationChanged;
+ 		GamerServicesComp = new GamerServicesComponent(this);
+ 		base.Components.Add(GamerServicesComp);
+ 		ReportAchievement.Initialise();
+-		IronPyInteractive.PyHub.CustRoot = AppDomain.CurrentDomain.BaseDirectory;
++		IronPyInteractive.PyHub.CustRoot = storagePath;
+ 		if (mGameConfig.mIronpythonEnabled.GetValueOrDefault(true))
+ 		{
+ 			IronPyInteractive.Serve();
+@@ -391,8 +420,11 @@ public class Main : Game
+ 		base.Window.Title = LawnApp.AppVersionNumber.Replace("PGvZ ", "植物娘大战僵尸 HD ");
+ 		_filter = HandleSDLEvent;
+ 		SDL_AddEventWatch(_filter, IntPtr.Zero);
+-		_timerProc = BackupTick;
+-		_handle = SetTimer(IntPtr.Zero, IntPtr.Zero, 1u, _timerProc);
++		if (OperatingSystem.IsWindows())
++		{
++			_timerProc = BackupTick;
++			_handle = SetTimer(IntPtr.Zero, IntPtr.Zero, 1u, _timerProc);
++		}
+ 		base.Initialize();
+ 		TPoint? mScreenSize = mGameConfig.mScreenSize;
+ 		int num = mScreenSize?.x ?? Constants.BackBufferSize.Y;
+@@ -416,6 +448,25 @@ public class Main : Game
+ 		};
+ 	}
+ 
++	private static void EnsureDirectoryLink(string linkPath, string targetPath)
++	{
++		DirectoryInfo linkInfo = new DirectoryInfo(linkPath);
++		if (linkInfo.LinkTarget != null)
++		{
++			FileSystemInfo resolvedTarget = linkInfo.ResolveLinkTarget(returnFinalTarget: false);
++			if (resolvedTarget == null || !string.Equals(Path.GetFullPath(resolvedTarget.FullName), Path.GetFullPath(targetPath), StringComparison.Ordinal))
++			{
++				Directory.Delete(linkPath);
++				Directory.CreateSymbolicLink(linkPath, targetPath);
++			}
++			return;
++		}
++		if (!Directory.Exists(linkPath) && !File.Exists(linkPath))
++		{
++			Directory.CreateSymbolicLink(linkPath, targetPath);
++		}
++	}
++
+ 	private void BackupTick(IntPtr hWnd, uint uMsg, IntPtr nIDEvent, uint dwTime)
+ 	{
+ 		if (_started)
+@@ -480,6 +531,17 @@ public class Main : Game
+ 
+ 	private void SaveGameConfiguration()
+ 	{
++		if (OperatingSystem.IsMacOS())
++		{
++			Directory.CreateDirectory(GetDefaultStoragePath());
++			LawnGameConfig macConfig = mGameConfig - new LawnGameConfig
++			{
++				mCustomConfigPath = "",
++				mStoragePath = ""
++			};
++			SyncGameConfigFromJson(in macConfig, GetUserConfigPath(), isWriting: true);
++			return;
++		}
+ 		if (mGameConfig.mCustomConfigPath != null)
+ 		{
+ 			LawnGameConfig config = mGameConfig - new LawnGameConfig
