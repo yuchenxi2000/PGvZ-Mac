@@ -8,6 +8,8 @@
 
 它保留游戏原有的 .NET 6、IronPython 模组接口和 RuntimeDetour 动态 Hook 能力，并以 macOS 原生 MonoGame、SDL 和 OpenAL 运行，不需要 Wine 或 CrossOver。
 
+构建脚本还会编译并打包固定版本的 Apple Silicon `libopenmpt`，内置 MO3 所需的解码器；App 移动后仍能加载音乐，运行时无需 Homebrew。
+
 仓库不包含游戏反编译源码、原始程序集、游戏资源、IronPython 标准库或可运行的游戏 App。使用者请前往 [庄特纯的 BiliBili 账号](https://space.bilibili.com/3493090151107069) 下载 Windows 版游戏。
 
 ## 构建方法
@@ -106,7 +108,7 @@ dist/PlantGirlsVsZombies.app
 ./tests/smoke-app.sh
 ```
 
-测试覆盖游戏启动、标题界面、IronPython 执行、WebSocket 命令通道、RuntimeDetour Hook 和正常退出。
+测试覆盖游戏启动、标题界面、IronPython 执行、WebSocket 命令通道、真实 RuntimeDetour Hook、IMEHelper 初始化和正常退出。使用 MO3 的构建还会实际解码音乐，并验证 interactive 音乐接口和游戏主音乐加载状态。设置 `PGVZ_APP_PATH` 为 App 的绝对路径即可测试移动后的副本。这些检查不代表完整游戏流程已验证。
 
 准备发布仓库前运行：
 

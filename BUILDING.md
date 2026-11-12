@@ -153,7 +153,7 @@ export PGVZ_GAME_DIR="/absolute/path/to/PlantGirlsVsZombies"
 dist/PlantGirlsVsZombies.app
 ```
 
-这个 App 自带 .NET 6 runtime、macOS SDL/OpenAL 库、游戏资源和 IronPython 标准库。运行时不再需要 CrossOver、Wine 或系统级 .NET。
+这个 App 自带 .NET 6 runtime、macOS SDL/OpenAL 库、libopenmpt 音乐解码库、游戏资源和 IronPython 标准库。运行时不再需要 CrossOver、Wine、Homebrew 或系统级 .NET。
 
 ## 6. 分步构建与故障定位
 
@@ -241,6 +241,8 @@ rm -rf -- "$PWD/src/Lawn" "$PWD/artifacts" "$PWD/dist"
 
 发布参数明确禁用了 AOT、裁剪和 ReadyToRun。IronPython、反射与 RuntimeDetour 都依赖完整元数据和 JIT，不应打开这些优化。
 
+打包和未打包运行都会调用 `scripts/prepare-openmpt.sh`：下载并校验固定 SHA-256 的 libopenmpt 0.8.10 源码，以 Apple Silicon 和 macOS 11.0 为目标编译，使用内置 miniz、minimp3、stb_vorbis，并把 `libopenmpt.dylib` 与许可证复制到运行目录。首次执行需要联网，后续复用 `.tools/` 中的源码和编译结果。库仅链接 macOS 系统依赖，不使用 Homebrew 路径，因此移动 App 后仍能加载 MO3 音乐。
+
 打包脚本从反编译项目的 `Properties/AssemblyInfo.cs` 读取 `AssemblyFileVersion` 和 `AssemblyInformationalVersion`，自动写入 `Info.plist`。因此 App 版本会随输入游戏变化，而不是固定在仓库模板中的某个版本。`CFBundleVersion` 由四段文件版本编码为单调递增的纯数字，避免覆盖安装时退回旧构建号；`PGVZGameVersion` 和 `PGVZLawnSHA256` 也会写入成品，便于追溯其输入。
 
 App 结构概要：
@@ -314,10 +316,11 @@ file dist/PlantGirlsVsZombies.app/Contents/MacOS/Lawn
 - 启动游戏并等待本地 `ws://127.0.0.1:8080/Py`；
 - 验证 IronPython 表达式 `40 + 2` 返回 `42`；
 - 验证一个真实 RuntimeDetour Hook 被调用；
+- 确认到达标题画面，并拒绝音乐加载失败日志；使用 libopenmpt 的游戏构建还会实际解码两份 MO3 音乐，验证非静音 PCM、interactive 接口及游戏主音乐加载状态；
 - 通过 WebSocket 请求游戏正常退出；
 - 清理测试模组、标记文件和日志。
 
-运行前请关闭其他游戏实例，并确认 8080 端口未被占用。测试不会删除已有同名模组；检测到冲突会直接停止。
+运行前请关闭其他游戏实例，并确认 8080 端口未被占用。测试不会删除已有同名模组或标记；检测到冲突会直接停止。测试已移动的 App 时，可设置 `PGVZ_APP_PATH` 为该 App 的绝对路径后运行 `tests/smoke-app.sh`。这些检查不代表完整游戏流程已验证。
 
 构建日志中可能出现：
 
@@ -419,3 +422,7 @@ Finder/Dock 可能保留缓存。确认 App 内部构建号和新图标已更新
 ### 修改按键绑定时提示找不到 `libSDL2-2.0.0.dylib`
 
 MonoGame 3.8.1 提供的库名是 `libSDL2.dylib`，而 IMEHelper 0.10.0 使用旧名称。重新运行打包脚本；它会在 `Contents/MacOS/` 创建 `libSDL2-2.0.0.dylib` 符号链接，并由冒烟测试实际初始化 IMEHelper 验证。
+
+### MO3 音乐提示找不到 `libopenmpt`
+
+旧的打包流程可能遗漏 MO3 原生解码库。更新仓库后重新运行打包脚本，它会将 Apple Silicon 版 `libopenmpt.dylib` 一同放入 `Contents/MacOS/` 并重新签名；随后运行音乐冒烟检查。仅安装 Windows DLL 或在系统中安装 Homebrew 库不能补齐可移动 App 的依赖。

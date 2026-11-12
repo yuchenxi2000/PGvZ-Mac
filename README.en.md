@@ -8,6 +8,8 @@ This repository rebuilds the Windows release of *PlantGirlsVsZombies* as a nativ
 
 The port retains the original .NET 6 runtime model, IronPython mod interface, and RuntimeDetour hooks. It runs with native macOS builds of MonoGame, SDL, and OpenAL, without requiring Wine or CrossOver.
 
+The build scripts also compile and bundle a pinned Apple Silicon `libopenmpt` with built-in MO3 codecs. Music continues to load after moving the app, without a Homebrew runtime dependency.
+
 This repository does not contain decompiled game source, original assemblies, game assets, the IronPython standard library, or a runnable game app. Obtain the Windows release from [the developer's Bilibili account](https://space.bilibili.com/3493090151107069).
 
 ## Building
@@ -109,7 +111,7 @@ Run the complete packaged-app smoke test after building:
 ./tests/smoke-app.sh
 ```
 
-It covers game startup, the title screen, IronPython execution, the WebSocket command channel, a real RuntimeDetour hook, IMEHelper initialization, and clean shutdown.
+It covers game startup, the title screen, IronPython execution, the WebSocket command channel, a real RuntimeDetour hook, IMEHelper initialization, and clean shutdown. Builds using MO3 also decode real music samples and verify the interactive music API and the game's loaded main track. Set `PGVZ_APP_PATH` to an app's absolute path to test it after relocation. These checks do not verify the full gameplay experience.
 
 Before publishing changes to the repository, run:
 

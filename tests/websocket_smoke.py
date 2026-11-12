@@ -74,13 +74,20 @@ def main():
         if b" 101 " not in status:
             raise RuntimeError(f"WebSocket upgrade failed: {status!r}")
         send_text(sock, args.command)
-        opcode, payload = receive_frame(sock)
-        if opcode != 1:
-            raise RuntimeError(f"Expected text frame, got opcode {opcode}")
-        event = json.loads(payload.decode("utf-8"))
-        if expected is not None and str(event.get("result")) != expected:
-            raise RuntimeError(f"Unexpected execution result: {event!r}")
-        print(json.dumps(event, ensure_ascii=False))
+        while True:
+            opcode, payload = receive_frame(sock)
+            if opcode != 1:
+                raise RuntimeError(f"Expected text frame, got opcode {opcode}")
+            event = json.loads(payload.decode("utf-8"))
+            if event.get("eventtype") == "output":
+                print(json.dumps(event, ensure_ascii=False))
+                continue
+            if event.get("eventtype") != "execution" or event.get("statuscode") != 0 or event.get("errortype"):
+                raise RuntimeError(f"Command did not execute successfully: {event!r}")
+            if expected is not None and str(event.get("result")) != expected:
+                raise RuntimeError(f"Unexpected execution result: {event!r}")
+            print(json.dumps(event, ensure_ascii=False))
+            break
 
 
 if __name__ == "__main__":

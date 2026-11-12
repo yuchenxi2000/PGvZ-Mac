@@ -53,6 +53,7 @@ dotnet publish "$PROJECT_ROOT/src/Lawn/Lawn.csproj" \
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$PROJECT_ROOT/dist"
 cp -R "$PUBLISH_DIR/." "$MACOS_DIR/"
 "$SCRIPT_DIR/link-sdl-compat.sh" "$MACOS_DIR"
+"$SCRIPT_DIR/prepare-openmpt.sh" "$MACOS_DIR"
 cp "$PROJECT_ROOT/packaging/Info.plist" "$CONTENTS/Info.plist"
 
 GAME_FILE_VERSION=$(awk -F '"' '/AssemblyFileVersion\("/ { print $2; exit }' "$ASSEMBLY_INFO")
